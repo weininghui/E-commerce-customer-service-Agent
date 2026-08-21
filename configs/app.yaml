@@ -1,0 +1,295 @@
+# =====================================================================
+# agent-base 配置
+# ---------------------------------------------------------------------
+# 约定：所有连接地址 / 密钥均支持环境变量覆盖，格式 ${VAR:-默认值}。
+#   生产部署只改环境变量，不改本文件；默认值面向本地开发。
+#   完整环境变量清单见 .env.example。
+# =====================================================================
+
+project:
+  name: agent-base
+  language: zh
+
+# 默认域：电商（P10 彻底切）
+domain: ecommerce
+
+security:
+  # 管理接口鉴权 token（X-Admin-Token header）；生产环境务必修改
+  admin_token: ${ADMIN_TOKEN:-admin-dev-token-2026}
+  # 数据中台对接 token（X-Platform-Token header）：仅用于 /api/platform/* 推送文档
+  platform_token: ${PLATFORM_TOKEN:-platform-dev-token-2026}
+  # 严格模式：true 时拒绝随仓库分发的默认 token（admin-dev-token-2026 等），
+  # 生产环境建议 SECURITY_STRICT=1 环境变量开启；开启前先配置好 ADMIN_TOKEN/PLATFORM_TOKEN
+  strict: ${SECURITY_STRICT:-false}
+  # 对话接口限流（进程内滑动窗口，按客户端 IP；多 worker 部署时按 IP 均摊仍有效）
+  rate_limit:
+    enabled: true            # false 关闭限流
+    requests_per_minute: 60  # 单 IP 每分钟对话请求上限（429 拒绝）
+    window_seconds: 60       # 滑动窗口长度（秒）
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  chroma_dir: data/chroma
+
+index:
+  chunk_collection: ecommerce_chunks
+  summary_collection: ecommerce_summaries
+
+documents:
+  retention_days: 30   # 回收站保留天数，到期自动物理清除（v0.46）
+
+tasks:
+  # 异步任务队列（PG 持久化）：知识流水线 / 商品图生成等耗时操作后台执行
+  worker_enabled: true       # 应用启动时是否拉起 worker（false 时只入队不执行，便于单测）
+  worker_poll_interval: 2.0  # 空闲轮询间隔（秒）
+  worker_concurrency: 2      # 单 worker 并发执行上限
+  worker_timeout_s: 300      # 单任务执行超时（秒）
+
+handoff:
+  pending_timeout_min: 15   # 待接入超时（分钟），超时自动过期移出队列
+  idle_timeout_min: 20      # 接管静默超时（分钟），超时自动关闭
+
+framework:
+  # 编排方式：classic（线性问答链，默认）| langgraph | agent（P2 起启用）
+  orchestrator: classic
+  supervisor:
+    # P33a：主 Agent（Supervisor）编排入口——默认关闭，关闭时走经典链路（行为不变）
+    enabled: false
+    # v0.49: 多 Agent 编排全走 LangGraph（自研 classic 已移除）
+    implementation: langgraph
+  agent:
+    enabled: false
+    model: deepseek-v4-pro
+    model_flash: deepseek-v4-flash      # 成本敏感降级
+    base_url: ${LLM_BASE_URL:-https://api.deepseek.com}  # DeepSeek OpenAI 兼容网关
+    api_key_env: ANTHROPIC_AUTH_TOKEN
+    max_iterations: 6
+
+vectorstore:
+  # 生产：Qdrant（P9 迁移完成）；chroma 仅作无 Docker 兜底
+  provider: qdrant
+  url: ${QDRANT_URL:-http://localhost:6333}
+  collection: ecommerce_chunks
+  summary_collection: ecommerce_summaries
+
+rerank:
+  # 本地重排（TEI + bge-reranker-v2-m3，localhost:8081，已验证可用）
+  # CI/无重排服务时设 RERANK_PROVIDER=none 跳过重排
+  provider: ${RERANK_PROVIDER:-local_tei}
+  model: bge-reranker-v2-m3
+  endpoint: ${RERANK_ENDPOINT:-http://localhost:8081/rerank}
+  timeout: 30
+  use_for_strategies:
+    - safety_hybrid
+    - summary_guided_hybrid
+    - hybrid
+  preserve_preferred_sections: true
+
+embedding:
+  # v0.48: 统一 OpenAIEmbeddings（LangChain）——本地走 Ollama OpenAI 兼容端点 /v1，
+  # 云端切 DASHSCOPE（provider 不变，改 base_url + api_key_env + model）。
+  # 注意：索引与 embedding 必须一致——换模型必须用新模型重建索引。
+  # CI/无外部向量服务时可用 EMBEDDING_PROVIDER=hash 走确定性本地向量
+  provider: ${EMBEDDING_PROVIDER:-openai}
+  model: bge-m3
+  base_url: ${EMBEDDING_BASE_URL:-http://localhost:11434/v1}
+  dimensions: 1024
+  api_key_env: DASHSCOPE_API_KEY   # Ollama /v1 不校验 key；云端填真实 key
+  keep_alive: 1800  # 仅 ollama 分支使用；openai 分支由 lifespan 预热循环兜底防冷启动
+
+llm:
+  # 受控生成层：DeepSeek-v4-pro（OpenAI 兼容网关）
+  provider: langchain
+  model: deepseek-v4-pro
+  base_url: ${LLM_BASE_URL:-https://api.deepseek.com}
+  api_key_env: ANTHROPIC_AUTH_TOKEN
+  temperature: 0.1
+  timeout: 60              # 单次请求超时（秒），防止外部模型挂起拖垮问答链路
+  max_retries: 2           # 请求失败自动重试次数
+
+  temperature_by_intent:      # 动态温度：生成温度 = 意图基底 + 情绪调节（P0-2）
+    product_query: 0.1        # 商品查询：准确优先
+    price_query: 0.1          # 价格查询：准确优先
+    comparison: 0.2           # 对比：低中
+    recommendation: 0.4       # 推荐：有感染力
+    aftersale: 0.15           # 售后：稳定安抚
+    general_qa: 0.3           # 通用问答：自然
+  evidence:
+    # Evidence budget for the controlled LLM prompt. Increase these values when
+    # switching to a model with a larger context window; decrease them to reduce
+    # latency/cost for smaller models.
+    # T9：适配 DeepSeek V4 256K 上下文（电商场景），预算约占窗口 30%
+    max_chars_per_doc: 3000
+    max_total_chars: 18000
+    max_chars_per_product: 4500
+    max_chars_per_product_doc: 2400
+
+eval:
+  # 评测 RAGAS 指标门控（成本敏感：每例多次 LLM + embedding，默认关闭走自研 LCEL 判官）
+  ragas_enabled: false
+
+eval_ragas_llm:
+  # RAGAS 打分 LLM（低成本 flash；与 LCEL 判官同源但独立配置）
+  provider: langchain
+  model: deepseek-v4-flash
+  base_url: ${LLM_BASE_URL:-https://api.deepseek.com}
+  api_key_env: ANTHROPIC_AUTH_TOKEN
+  temperature: 0.0
+  timeout: 60
+
+pre_review_llm:
+  # 预审 LLM（D7：低成本 flash，文档打标预审用，与主生成模型分离）
+  provider: langchain
+  model: deepseek-v4-flash
+  base_url: ${LLM_BASE_URL:-https://api.deepseek.com}
+  api_key_env: ANTHROPIC_AUTH_TOKEN
+  temperature: 0.0
+  timeout: 30
+
+knowledge_ops_llm:
+  # 知识运营 Agent 指令解析 LLM（Plan-Execute-Reflect 的 Plan 环节）
+  provider: langchain
+  model: deepseek-v4-flash
+  base_url: ${LLM_BASE_URL:-https://api.deepseek.com}
+  api_key_env: ANTHROPIC_AUTH_TOKEN
+  temperature: 0.0
+  timeout: 30
+
+logging:
+  # 日志分层保留：Redis 热层（实时排查）+ PG 冷层（ERROR/WARNING 审计）
+  redis_ttl_days: 7        # 热层 TTL（Redis app:logs）
+  redis_max_entries: 2000  # 热层容量（LIFO 最近 N 条）
+  pg_enabled: true         # 冷层开关（ERROR/WARNING 落 PG log_events）
+  pg_retention_days: 90    # 冷层保留天数（超期惰性清理）
+
+alerting:
+  # 生产告警：日志冷层 ERROR 超阈值 → 推送群机器人（钉钉/企微自定义机器人）
+  # 配置 ALERT_WEBHOOK_URL 后自动启用；dedup 去重防告警风暴
+  enabled: ${ALERT_ENABLED:-false}
+  webhook_url: ${ALERT_WEBHOOK_URL:-}
+  webhook_style: ${ALERT_WEBHOOK_STYLE:-dingtalk}
+  error_threshold: 5       # 窗口内 ERROR ≥ 此值触发 alert
+  window_minutes: 5        # 统计窗口（分钟）
+  dedup_minutes: 30        # 同级别告警去重间隔（分钟）
+
+auth:
+  # v0.53 买家快捷注册/登录：手机号验证码（mock 开发模式 / 阿里云 SMS 生产模式）
+  sms_provider: ${SMS_PROVIDER:-mock}   # mock | aliyun（生产配 aliyun 真实发码）
+
+context:
+  # 上下文成本控制（P28 升级：四级降级 + 可配置 + 可观测）
+  # 按「历史字符用量 / 预算」分档：
+  #   档1 全量注入（质量优先）→ 档2 滑动窗口（0 LLM）→ 档3 规则压缩（0 LLM）→ 档4 LLM 摘要（最后手段）
+  # 每档都守住三类信息：最近轮次原文、商品锚点、用户画像（由注入方保证）。
+  budget_chars: 60000          # 历史注入预算（字符）；T9 适配 256K 上下文，约占窗口 25-40%
+  tier_window_ratio: 0.25      # 档1→档2 阈值：用量占比达到 25% 起滑动窗口
+  tier_rule_ratio: 0.50        # 档2→档3 阈值：用量占比达到 50% 起规则压缩
+  compact_trigger_ratio: 0.80  # 档3→档4 阈值：用量占比达到 80% 才触发 LLM 摘要（兜底，最后手段）
+  compact_keep_recent: 8       # 档4 LLM 压缩后保留的最近原文条数
+  summary_max_chars: 400       # LLM 摘要输出上限（字符）
+  summarize_trim_chars: 8000   # 档4 摘要输入裁剪上限（只喂最近 N 字符，控制一次性 token 成本）
+  window_recent_msgs: 16       # 档2 滑动窗口保留的最近消息条数
+  window_msg_chars: 800        # 档2 每条消息截断上限（字符）
+  rule_first_msgs: 1           # 档3 保留的头部锚点条数（身份/诉求）
+  rule_recent_msgs: 12         # 档3 保留的最近原文条数
+  llm_compact_model: flash     # 档4 摘要模型档位：flash（成本敏感）| main
+
+memory:
+  # 长期记忆生产级写门控（对标 Salesforce write gates + 信任层级）
+  min_confidence: 0.6          # 写入门槛：低于此置信度不写入
+  anchor_confidence: 0.9       # 锚点保护：旧值高于此且新值不更高 → 不覆盖
+  conflict_confidence: 0.7     # 冲突检测：旧值高于此且值方向不一致 → 延迟覆盖
+  conflict_boost: 0.1          # 冲突时新值需比旧值高出的置信度增量
+  extract_every_rounds: 5      # 自动异步抽取：距离上次提炼满 N 轮才触发
+  async_extract_enabled: true  # 对话完成后自动异步提炼画像（不阻塞响应）
+  trust_base_confidence:       # 信任层级基础置信度
+    user_statement: 0.9        # 用户直接陈述
+    tool_result: 0.8           # 工具返回
+    agent_inference: 0.55      # Agent 推断（默认低于门槛，不写）
+    conflict_confirmed: 0.95   # 用户改口确认
+  pg_retention_days: 30        # PG 短期记忆（chat_messages）保留天数，超期后台清理（P1.5-7c）
+
+orchestration:
+  # 主 agent 任务编排（P33b-v2：TaskPlan + Send 动态分发）
+  supervisor_llm: main         # 任务理解模型档位：main（质量）| flash（成本）
+  max_goals: 3                 # goals 上限（超过截断）
+  max_reflect_rounds: 2        # 反思轮数上限（防死循环）
+  direct_max_complexity: 2     # direct 直答复杂度上限
+  fallback_to_rules: true      # TaskPlan 解析失败 → 回退正则 _detect_mode
+  enabled: true                # 总开关（false 时保持旧正则路由，可回滚）
+  # P1: 工程加固（节点容错 + 步数护栏 + 持久化）
+  retry_max_attempts: 2        # 关键 LLM 节点（supervise/worker/reflect）失败重试次数
+  node_timeout_seconds: 15     # supervise 决策超时秒数
+  max_steps: 30                # RemainingSteps 上限（超步数优雅退出，避免 GraphRecursionError）
+  checkpoint_db_url: ${CHECKPOINT_DB_URL:-}  # PostgresSaver 连接串（"none"=禁用；空=自动推断；完整URL=直连）
+
+vision:
+  # 视觉模型（多模态 P6 使用）：豆包 doubao-seed-2-0-lite-260428（火山方舟 ARK，OpenAI 兼容）
+  provider: langchain
+  model: doubao-seed-2-0-lite-260428
+  base_url: ${ARK_BASE_URL:-https://ark.cn-beijing.volces.com/api/v3}
+  api_key_env: ARK_API_KEY
+
+intent_classifier:
+  # 会话级意图识别 v2：规则快路径 → LLM（flash，低置信/零命中触发）→ 向量语义兜底。
+  # disabled / 模型不可用 / 输出非法时回退规则，不阻塞主链路。
+  enabled: true
+  provider: langchain
+  model: deepseek-v4-flash
+  base_url: ${LLM_BASE_URL:-https://api.deepseek.com}
+  api_key_env: ANTHROPIC_AUTH_TOKEN
+  temperature: 0.0
+  semantic:
+    # 向量语义兜底：复用 embedding 配置（生产 bge-m3），embedding 不可用时自动跳过
+    enabled: true
+    threshold: 0.55
+
+prompts:
+  path: configs/prompts_ecommerce.yaml
+
+retrieval:
+  multi_query:
+    enabled: false       # P8/T6：Multi-Query 改写（1 问题→3 变体）。T6b 评测：src_hit 0.56→0.53 无提升，保持关闭
+    variants: 3
+    provider: langchain          # P32e：变体改写 LLM（成本敏感用 flash）
+    model: deepseek-v4-flash
+    base_url: ${LLM_BASE_URL:-https://api.deepseek.com}
+    api_key_env: ANTHROPIC_AUTH_TOKEN
+  self_ask:
+    enabled: false       # P8：Self-Ask 多跳拆解，默认关闭
+  decomposition:
+    enabled: false       # P32d：复合问题拆解（比较/多问号/并列）。T6b 评测：无提升，保持关闭
+  enhancement:
+    # P32e/BUG-23：Multi-Query 触发阈值（top1 得分 < 此值视为低质量）。
+    # 校准依据：14 份真实文档重建索引后实测，高质量问题 top1 ∈ [0.62, 0.80]，
+    # 无关问题 top1 ∈ [0.37, 0.54]，取 0.55 分界；gap_margin 做相对判别兜底。
+    quality_top1_threshold: 0.55
+    quality_hit_threshold: 3      # P32e：Multi-Query 触发阈值（命中数 < 此值）
+    quality_gap_margin: 0.08      # BUG-23：top1 领先次高分的差距，超过视为有效命中（相对判别）
+  fusion:
+    enabled: true        # RRF 融合开关：主链路 dense(向量)+sparse(BM25) 加权排名融合（P8）
+    k: 60                # RRF 常数
+  summary_index:
+    enabled: true        # P14/P18：官方 MultiVectorRetriever 摘要索引（LLM 每块摘要→命中回原块）
+    summary_concurrency: 50     # P18：摘要生成并发数（上限 500）
+    summary_timeout: 60         # P18：LLM 请求超时秒数
+    summary_max_retries: 2      # P18：429/5xx 指数退避重试次数
+  parent_child:
+    enabled: false       # P14：官方 ParentDocumentRetriever 父子索引（子块检索→回溯父文档）
+  self_query:
+    enabled: false       # P14：官方 SelfQueryRetriever LLM 元数据过滤（与规则版互补）
+  hypothetical_variants:
+    enabled: false       # P14-05：LLM 并发生成 FAQ 变体（关闭时用规则模板）
+  hybrid:
+    enabled: true        # P15-01：BM25 稀疏向量 dense+sparse 双路召回 + RRF（配合 fusion.enabled）
+    dense_weight: 0.7    # RRF 融合中稠密向量路权重（稠密语义优先）
+    sparse_weight: 0.3   # RRF 融合中 BM25 稀疏路权重（关键词补充）
+  enrich_alias:
+    enabled: true        # T4：别名映射（如"玻尿酸精华"→"玻尿酸保湿精华液"），提升商品定位
+  enrich_reference:
+    enabled: true        # T4b：多轮指代补全（如"它多少钱"→"玻尿酸保湿精华液 它多少钱"）
+
+safety:
+  require_source_citations: true
+  compliance_disclaimer: true

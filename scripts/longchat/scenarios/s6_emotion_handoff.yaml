@@ -1,0 +1,19 @@
+id: s6
+name: 情绪与转人工（焦虑→安抚→愤怒→转人工）
+turns:
+  - q: "我皮肤敏感，这个神经酰胺面霜用了会不会过敏，好担心"
+    assert:
+      stage: none
+      action: answer
+  - q: "真的没问题吗，我怕踩雷"
+    assert:
+      answer_nonempty: true
+  - q: "你们客服怎么回事，处理这么慢，太过分了，我要投诉"
+    assert:
+      handoff: true
+  - q: "还在吗，回话啊"
+    assert:
+      handoff: true
+  - q: "算了，我自己处理"
+    assert:
+      handoff: true

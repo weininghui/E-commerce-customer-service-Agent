@@ -1,0 +1,46 @@
+id: s3
+name: 指代与话题切换（这个/它/那款，跨商品切换再切回）
+turns:
+  - q: "白色纯棉T恤怎么样"
+    assert:
+      no_clarify: true
+  - q: "它会不会透"
+    assert:
+      no_clarify: true
+  - q: "那高腰阔腿裤呢"
+    assert:
+      no_clarify: true
+  - q: "这个显矮吗"
+    assert:
+      no_clarify: true
+  - q: "换回刚才那件T恤，面料是什么"
+    assert:
+      no_clarify: true
+  - q: "它多少钱"
+    assert:
+      no_clarify: true
+  - q: "玻尿酸精华适合油皮吗"
+    assert:
+      no_clarify: true
+  - q: "这款和烟酰胺精华比呢"
+    assert:
+      no_clarify: true
+  - q: "那它有什么注意事项"
+    assert:
+      no_clarify: true
+  - q: "法式碎花连衣裙适合约会穿吗"
+    assert:
+      no_clarify: true
+  - q: "它尺码怎么选"
+    assert:
+      no_clarify: true
+  - q: "回到玻尿酸精华，功效是什么"
+    assert:
+      no_clarify: true
+  - q: "它含酒精吗"
+    assert:
+      no_clarify: true
+  - q: "这个能退货吗"
+    assert:
+      intent: aftersale
+      no_clarify: true

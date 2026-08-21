@@ -1,0 +1,88 @@
+id: s2
+name: 完整购买旅程（挖需→推荐→比价→异议→促单→连带→下单→售后）
+turns:
+  - q: "你好"
+    assert:
+      answer_nonempty: true
+      event_complete: true
+  - q: "这个玻尿酸精华适合我吗，有点想买"
+    assert:
+      stage: consult
+      action: clarify_requirements
+  - q: "我是干皮，预算三百左右"
+    assert:
+      stage: evaluate
+      action: recommend
+  - q: "它和玻尿酸面霜哪个好"
+    assert:
+      stage: evaluate
+      action: answer
+  - q: "成分会不会刺激"
+    assert:
+      stage: evaluate
+      action: answer
+  - q: "有点纠结，怕不适合我"
+    assert:
+      stage: hesitate
+      action: objection_handle
+  - q: "好吧，就它了"
+    assert:
+      stage: close
+      action: close_attempt
+  - q: "这个搭配什么好"
+    assert:
+      stage: close
+      action: cross_sell
+  - q: "已经下单了"
+    assert:
+      stage: after
+      action: answer
+  - q: "什么时候发货"
+    assert:
+      intent: aftersale
+      stage: after
+      action: answer
+  - q: "想退货怎么弄"
+    assert:
+      intent: aftersale
+      stage: after
+      action: answer
+  # 第二段旅程：价格异议
+  - q: "这款白色纯棉T恤多少钱"
+    assert:
+      stage: consult
+      action: answer
+  - q: "99还是有点贵"
+    assert:
+      stage: hesitate
+      action: objection_handle
+  - q: "行吧，那就入手"
+    assert:
+      stage: close
+      action: close_attempt
+  - q: "买了两件，什么时候能到"
+    assert:
+      intent: aftersale
+      stage: after
+      action: answer
+  # 第三段旅程：求推荐
+  - q: "帮我推荐一款精华"
+    assert:
+      stage: consult
+      action: clarify_requirements
+  - q: "我是油皮，预算两百以内"
+    assert:
+      stage: evaluate
+      action: recommend
+  - q: "有评价吗，别人用了怎么样"
+    assert:
+      stage: evaluate
+      action: answer
+  - q: "这个可以，来一瓶"
+    assert:
+      stage: close
+      action: close_attempt
+  - q: "谢谢，收到了会再来"
+    assert:
+      answer_nonempty: true
+      event_complete: true

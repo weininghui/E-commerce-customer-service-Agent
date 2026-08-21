@@ -1,0 +1,47 @@
+# 销售评测用例（公开版脱敏示例：仅通用问法，不含真实商品与业务话术）
+cases:
+  - id: buying_01
+    question: "这款精华适合我吗，有点想买"
+    expected: {intent: product_query, signal: {mode: buying, objection_type: none}, strategy: true}
+  - id: buying_02
+    question: "我想下单这个面霜"
+    expected: {intent: product_query, signal: {mode: buying, objection_type: none}, strategy: true}
+  - id: buying_03
+    question: "这个多少钱，想入手"
+    expected: {intent: price_query, signal: {mode: buying, objection_type: none}, strategy: true}
+  - id: price_01
+    question: "99还是有点贵"
+    expected: {intent: price_query, signal: {mode: objection, objection_type: price}, strategy: true}
+  - id: price_02
+    question: "太贵了，能便宜点吗"
+    expected: {intent: price_query, signal: {mode: objection, objection_type: price}, strategy: true}
+  - id: price_03
+    question: "这个价位划不划算"
+    expected: {intent: price_query, signal: {mode: objection, objection_type: price}, strategy: true}
+  - id: hesitant_01
+    question: "我再想想吧"
+    expected: {intent: product_query, signal: {mode: objection, objection_type: hesitant}, strategy: true}
+  - id: hesitant_02
+    question: "有点纠结要不要买"
+    expected: {intent: product_query, signal: {mode: objection, objection_type: hesitant}, strategy: true}
+  - id: risk_01
+    question: "万一不适合能退吗"
+    expected: {intent: aftersale, signal: {mode: objection, objection_type: risk}, strategy: false}
+  - id: risk_02
+    question: "怕买错尺码不合适"
+    expected: {intent: size_recommendation, signal: {mode: objection, objection_type: risk}, strategy: true}
+  - id: cross_sell_01
+    question: "这个搭配什么好"
+    expected: {intent: product_query, signal: {mode: buying, objection_type: none}, strategy: true}
+  - id: normal_01
+    question: "你们几点发货"
+    expected: {intent: aftersale, signal: {mode: normal, objection_type: none}, strategy: false}
+  - id: normal_02
+    question: "介绍一下成分"
+    expected: {intent: product_query, signal: {mode: normal, objection_type: none}, strategy: false}
+  - id: compliance_01
+    question: "效果是不是最好的"
+    expected: {intent: product_query, signal: {mode: normal, objection_type: none}, strategy: false}
+  - id: compliance_02
+    question: "能保证100%不过敏吗"
+    expected: {intent: product_query, signal: {mode: normal, objection_type: none}, strategy: false}

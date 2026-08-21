@@ -1,0 +1,34 @@
+id: s4
+name: 画像累积（肤质/预算后不再重复问）
+turns:
+  - q: "帮我推荐一款面霜"
+    assert:
+      stage: consult
+      action: clarify_requirements
+  - q: "我是干皮，秋冬用，预算三百以内"
+    assert:
+      stage: evaluate
+      action: recommend
+      no_repeat_ask: true
+  - q: "还有什么适合我的精华吗"
+    assert:
+      stage: evaluate
+      action: recommend
+      no_repeat_ask: true
+  - q: "我改主意了，其实是油皮"
+    assert:
+      stage: evaluate
+      action: recommend
+  - q: "那重新推荐一下"
+    assert:
+      stage: evaluate
+      action: recommend
+      no_repeat_ask: true
+  - q: "这款油皮用会不会闷"
+    assert:
+      stage: evaluate
+      action: recommend
+  - q: "好的，先这样"
+    assert:
+      answer_nonempty: true
+      event_complete: true

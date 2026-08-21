@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-base"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "chromadb>=0.5.0",
+    "fastapi>=0.115.0",
+    "langchain>=0.2.0",
+    "langchain-classic>=1.0.0",
+    "langchain-chroma>=0.1.0",
+    "langchain-community>=0.2.0",
+    "langchain-core>=0.2.0",
+    "langchain-ollama>=0.2.0",
+    "langchain-openai>=0.1.0",
+    "langchain-qdrant>=1.0.0",
+    "langgraph>=0.2.0",
+    "langgraph-checkpoint-postgres>=3.1.1",
+    "locust>=2.46.3",
+    "psycopg2-binary>=2.9.12",
+    "pytest>=8.0.0",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.9",
+    "pyyaml>=6.0.0",
+    "ragas>=0.4.3",
+    "redis>=8.1.0",
+    "sqlalchemy>=2.0.51",
+    "tenacity>=8.2.0",
+    "uvicorn[standard]>=0.30.0",
+    "psycopg[binary]>=3.2",
+    "lark>=1.3.1",
+    "langchain-deepseek>=1.1.0",
+    "bm25s>=0.3.10",
+    "jieba>=0.42.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.2",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+# 注释/docstring 规范（红线）：中文 + Google 风格 docstring
+select = ["D", "E4", "E7", "E9", "F"]
+# D400/D401/D402/D403/D415 为英文行文规则（首行以英文标点结尾/祈使语气），
+# 中文 docstring 以"。"结尾不适用，忽略；保留结构规则（缺 docstring/缺 Args/格式）。
+ignore = ["D400", "D401", "D402", "D403", "D415"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]

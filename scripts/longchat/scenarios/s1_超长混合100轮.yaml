@@ -1,0 +1,403 @@
+id: s1
+name: 超长混合100轮（稳定性基线）
+turns:
+- q: 你好
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 在吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 谢谢
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好的
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 玻尿酸精华适合油皮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这款面霜的成分是什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 保质期多久
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 含酒精吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 白色纯棉T恤怎么样
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 它会不会透
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 高腰阔腿裤显矮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 多少钱
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有优惠吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能便宜点吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 什么时候发货
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能退货吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这个精华适合我吗，有点想买
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有点纠结
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好吧，就它了
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 帮我推荐一款面霜
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 敏感肌用什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有图片吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 看看这件T恤
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 再见
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 你好
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 在吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 谢谢
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好的
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 玻尿酸精华适合油皮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这款面霜的成分是什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 保质期多久
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 含酒精吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 白色纯棉T恤怎么样
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 它会不会透
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 高腰阔腿裤显矮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 多少钱
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有优惠吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能便宜点吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 什么时候发货
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能退货吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这个精华适合我吗，有点想买
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有点纠结
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好吧，就它了
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 帮我推荐一款面霜
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 敏感肌用什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有图片吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 看看这件T恤
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 再见
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 你好
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 在吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 谢谢
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好的
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 玻尿酸精华适合油皮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这款面霜的成分是什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 保质期多久
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 含酒精吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 白色纯棉T恤怎么样
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 它会不会透
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 高腰阔腿裤显矮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 多少钱
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有优惠吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能便宜点吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 什么时候发货
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能退货吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这个精华适合我吗，有点想买
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有点纠结
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好吧，就它了
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 帮我推荐一款面霜
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 敏感肌用什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有图片吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 看看这件T恤
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 再见
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 你好
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 在吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 谢谢
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好的
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 玻尿酸精华适合油皮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这款面霜的成分是什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 保质期多久
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 含酒精吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 白色纯棉T恤怎么样
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 它会不会透
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 高腰阔腿裤显矮吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 多少钱
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有优惠吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能便宜点吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 什么时候发货
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 能退货吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 这个精华适合我吗，有点想买
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有点纠结
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好吧，就它了
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 帮我推荐一款面霜
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 敏感肌用什么
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 有图片吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 看看这件T恤
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 再见
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 你好
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 在吗
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 谢谢
+  assert:
+    answer_nonempty: true
+    event_complete: true
+- q: 好的
+  assert:
+    answer_nonempty: true
+    event_complete: true

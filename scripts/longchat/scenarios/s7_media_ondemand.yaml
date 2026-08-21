@@ -1,0 +1,33 @@
+id: s7
+name: 媒体按需（先讲解、主动引导一次、要看才出）
+turns:
+  - q: "我想买衣服有什么推荐嘛"
+    assert:
+      media: false
+  - q: "白色纯棉T恤有图片吗"
+    assert:
+      media: true
+  - q: "有视频吗"
+    assert:
+      media: true
+  - q: "玻尿酸精华有视频吗"
+    assert:
+      media: true
+  - q: "它多少钱"
+    assert:
+      media: false
+  - q: "白色纯棉T恤的实拍图有吗"
+    assert:
+      media: true
+  - q: "这个精华适合我吗，有点想买"
+    assert:
+      media: false
+  - q: "我是干皮，帮我看看"
+    assert:
+      media: false
+  - q: "看看玻尿酸精华的实拍图"
+    assert:
+      media: true
+  - q: "好的，先不看了"
+    assert:
+      media: false

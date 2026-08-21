@@ -1,0 +1,118 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.13.0
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ragdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ragdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    entrypoint:
+      - /bin/sh
+      - -c
+      - "ollama serve & sleep 5 && ollama pull bge-m3 && wait"
+
+  tei:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.5
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3", "--port", "8081"]
+    ports:
+      - "8081:8081"
+    volumes:
+      - tei_data:/data
+    restart: unless-stopped
+
+  backend:
+    build: .
+    # 生产 CD：CI 推送 GHCR 后，云端 docker compose pull backend 拉取此镜像；
+    # 本地开发仍走 build（镜像不存在时自动构建）
+    image: ghcr.io/weininghui/e-commerce-customer-service-agent/agent-base-backend:latest
+    env_file: .env
+    environment:
+      AGENT_BASE_PROJECT_ROOT: /app
+      AGENT_BASE_CONFIG: /app/configs/app.yaml
+      QDRANT_URL: http://qdrant:6333
+      PG_URL: postgresql://postgres:${PG_PASSWORD:-postgres}@postgres:5432/ragdb
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      EMBEDDING_BASE_URL: http://ollama:11434/v1
+      RERANK_ENDPOINT: http://tei:8081/rerank
+      LLM_BASE_URL: https://api.deepseek.com
+      # 公开版不含前端源码；前端为闭源实现，部署时由私有镜像挂载
+      FRONTEND_DIST_DIR: /app/frontend-dist
+      # 生产安全（建议在 .env 配置强值；strict=1 时拒绝默认 token）
+      SECURITY_STRICT: ${SECURITY_STRICT:-0}
+      ADMIN_SECRET: ${ADMIN_SECRET:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      PLATFORM_TOKEN: ${PLATFORM_TOKEN:-}
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD:-}
+      AGENT_INITIAL_PASSWORD: ${AGENT_INITIAL_PASSWORD:-}
+      # PG 连接池
+      PG_POOL_MIN: ${PG_POOL_MIN:-2}
+      PG_POOL_MAX: ${PG_POOL_MAX:-20}
+    ports:
+      - "8000:8000"
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      tei:
+        condition: service_started
+    healthcheck:
+      # python urllib 检查（镜像为 slim 无 curl；与 Dockerfile HEALTHCHECK 一致）
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health', timeout=5).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  pg_data:
+  ollama_data:
+  tei_data:
