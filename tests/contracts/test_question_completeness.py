@@ -59,3 +59,34 @@ def test_attribute_question_with_session_anchor_is_answerable():
     """会话已锚定商品 → 属性追问视为对当前商品的补充提问，不澄清。"""
     dec = _decision("要注意什么事项", current_product="白色纯棉T恤")
     assert dec.need_clarification is False
+
+
+# ── 品类优先澄清（美妆 / 服饰） ──
+
+
+def test_vague_recommendation_asks_category_first():
+    """「有什么推荐」未指明品类 → 先问美妆还是服饰，不再直接列商品。"""
+    dec = _decision("有什么推荐")
+    assert dec.need_clarification is True
+    assert "美妆" in dec.clarification_question
+    assert "服饰" in dec.clarification_question
+    assert "玻尿酸" not in dec.clarification_question
+
+
+def test_beauty_recommendation_does_not_ask_category():
+    """「敏感肌用什么」已含美妆语义 → 直接推荐，不澄清。"""
+    dec = _decision("敏感肌用什么")
+    assert dec.need_clarification is False
+
+
+def test_fashion_recommendation_does_not_ask_category():
+    """「帮我推荐衣服」已指明服饰 → 直接推荐，不澄清。"""
+    dec = _decision("帮我推荐衣服")
+    assert dec.need_clarification is False
+
+
+def test_category_specific_product_clarification_lists_that_category():
+    """已指明品类但没指名商品（如「推荐精华」）→ 澄清只列该品类候选。"""
+    dec = _decision("推荐精华")
+    if dec.need_clarification:
+        assert "精华" in dec.clarification_question

@@ -133,7 +133,9 @@ def build_retrieval_decision(
     # - 必须澄清：含指示代词或极短无匹配 → strategy=clarification
     # - 可降级推荐：无指示代词、未指定商品但语义明确（如"敏感肌用什么"）
     #   → 正常 hybrid 检索 + route_type="recommendation"（多商品推荐式回答）
-    completeness = _classify_question_completeness(question, intent, current_product)
+    completeness = _classify_question_completeness(
+        question, intent, current_product, category_dim=rewrite.route.category_dim
+    )
     if (
         intent in CLARIFICATION_INTENTS
         and not product_name
@@ -141,7 +143,7 @@ def build_retrieval_decision(
         and completeness != "answerable"
     ):
         if completeness == "clarify":
-            clarification_q = _build_clarification_candidates()
+            clarification_q = _build_clarification_candidates(rewrite.route)
             return rewrite, RetrievalDecision(
                 intent=intent,
                 strategy="clarification",
@@ -256,7 +258,12 @@ def _load_catalog() -> dict[str, Any] | None:
 _VAGUE_REFERENCES = ["这款", "这个商品", "这个产品", "那个商品", "那个产品", "哪个好", "哪款好"]
 
 
-def _classify_question_completeness(question: str, intent: str, current_product: str | None = None) -> str:
+def _classify_question_completeness(
+    question: str,
+    intent: str,
+    current_product: str | None = None,
+    category_dim: str = "",
+) -> str:
     """分类问题完整性，区分"必须澄清"和"可降级推荐"。
 
     P32c：不是所有缺商品名的问题都澄清。语义明确但未指定具体商品时，
@@ -318,6 +325,9 @@ def _classify_question_completeness(question: str, intent: str, current_product:
                 pass
         if not catalog_matched:
             if _looks_like_recommendation(question):
+                # 未指明品类（美妆/服饰）→ 先问品类，而不是直接列商品
+                if not category_dim:
+                    return "clarify"
                 return "recommend"
             # 属性类问题未指名商品（"要注意什么事项"）→ 必须澄清目标商品；
             # 但问题已含商品名词（"玻尿酸精华有什么注意事项"）→ 视为已指名，交给检索
@@ -361,31 +371,58 @@ def _looks_like_recommendation(question: str) -> bool:
     return False
 
 
-def _build_clarification_candidates() -> str:
-    """从商品 catalog 读取候选商品名，构造中文澄清追问。
+_BEAUTY_NAME_WORDS = (
+    "精华", "面霜", "洁面", "洗面", "防晒", "眼霜", "面膜", "润肤油",
+    "乳液", "水乳", "爽肤水", "身体乳", "精华液", "口红", "粉底", "水",
+    "乳",
+)
 
-    最多取前 5 个商品名作为候选提示，帮助用户快速指定；
-    catalog 不存在或无商品时返回兜底提示。
+_FASHION_NAME_WORDS = (
+    "T恤", "衬衫", "裤", "裙", "针织", "毛衣", "外套", "卫衣", "帽",
+    "鞋", "背心", "防晒衣", "套装",
+)
+
+
+def _build_clarification_candidates(route: Any) -> str:
+    """构造澄清追问：未指明品类先问美妆/服饰；已指明品类只列该品类候选。
+
+    Args:
+        route: 意图路由（含 category_dim）。
+
+    Returns:
+        澄清追问文本。
     """
+    category_dim = getattr(route, "category_dim", "") or ""
+    # 未指明品类：先问方向，不直接列商品
+    if not category_dim:
+        return (
+            "您想了解哪款产品呢？先看美妆还是服饰——美妆比如精华、面霜、防晒，"
+            "服饰比如 T恤、连衣裙、阔腿裤。告诉我方向，我帮您挑～"
+        )
     catalog = _load_catalog()
     if catalog is None:
-        return "您想了解哪款产品呢？请说出具体的商品名称，我为您查询详情。"
+        return "您想了解哪款产品呢？先看美妆还是服饰，告诉我方向，我帮您挑～"
     products = catalog.get("products", {})
-    # 取商品中文名（catalog key 是 P001 类 ID，name 在 value 里）
-    product_names = []
+    words = _BEAUTY_NAME_WORDS if category_dim == "beauty" else _FASHION_NAME_WORDS
+    product_names: list[str] = []
     for pid, info in products.items():
-        if isinstance(info, dict) and str(info.get("name") or "").strip():
-            product_names.append(str(info["name"]).strip())
-        elif isinstance(info, str) and info.strip():
-            product_names.append(info.strip())
-        else:
-            product_names.append(str(pid))
+        name = ""
+        if isinstance(info, dict):
+            name = str(info.get("name") or "").strip()
+        elif isinstance(info, str):
+            name = info.strip()
+        if not name:
+            name = str(pid)
+        if not any(w in name for w in words):
+            continue
+        product_names.append(name)
         if len(product_names) >= 5:
             break
     if product_names:
         names = "、".join(product_names)
+        label = "美妆" if category_dim == "beauty" else "服饰"
         return (
-            f"您想了解哪款产品呢？目前可咨询：{names}。"
+            f"您想看哪款{label}呢？目前可咨询：{names}。"
             f"您可以说出具体名称，我为您详细介绍。"
         )
-    return "您想了解哪款产品呢？请说出具体的商品名称，我为您查询详情。"
+    return "您想了解哪款产品呢？先看美妆还是服饰，告诉我方向，我帮您挑～"

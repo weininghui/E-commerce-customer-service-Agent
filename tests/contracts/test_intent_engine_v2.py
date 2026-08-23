@@ -121,6 +121,14 @@ def test_sub_intent_not_media_for_non_visual():
         assert route_question(q).sub_intent != "media_request", q
 
 
+def test_route_category_dim():
+    assert route_question("帮我推荐衣服").category_dim == "fashion"
+    assert route_question("推荐一件连衣裙").category_dim == "fashion"
+    assert route_question("推荐精华").category_dim == "beauty"
+    assert route_question("敏感肌用什么面霜").category_dim == "beauty"
+    assert route_question("有什么推荐").category_dim == ""
+
+
 # ── 缺失信息（需求挖掘） ──
 
 

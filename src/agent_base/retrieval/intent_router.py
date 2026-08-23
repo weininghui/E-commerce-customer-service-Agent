@@ -73,6 +73,9 @@ class QueryRoute:
     missing_info: list[str] = field(default_factory=list)
     """缺失需求信息（skin_type/budget/scene/product/size），供导购挖需使用。"""
 
+    category_dim: str = ""
+    """品类维度：beauty（美妆）/ fashion（服饰）/ ""（未指明），用于品类优先澄清。"""
+
     def to_dict(self) -> dict[str, Any]:
         """转为 dict，便于 trace / 调试面板展示。
 
@@ -400,6 +403,19 @@ _SIZE_BOOST_PATTERNS = (
     "选几码", "什么号", "腰围", "胸围", "肩宽", "衣长", "裤长",
 )
 
+_BEAUTY_WORDS = (
+    "精华", "面霜", "洁面", "洗面", "防晒", "眼霜", "面膜", "护肤油", "乳液",
+    "水乳", "爽肤水", "身体乳", "精华液", "口红", "粉底", "护肤", "肤质",
+    "敏感肌", "油皮", "干皮", "痘痘", "美白", "保湿", "控油", "水杨酸",
+    "烟酰胺", "玻尿酸", "神经酰胺",
+)
+
+_FASHION_WORDS = (
+    "衣服", "穿搭", "T恤", "衬衫", "裙", "裤", "针织", "毛衣", "外套",
+    "卫衣", "帽子", "鞋", "背心", "短裤", "连衣裙", "阔腿裤", "防晒衣",
+    "版型", "面料", "通勤", "约会", "显瘦", "套装",
+)
+
 _SKIN_TYPE_KEYWORDS = ("油皮", "干皮", "敏感肌", "混合皮", "中性皮", "痘痘肌", "混油", "混干")
 _BUDGET_KEYWORDS = ("预算", "价位", "多少钱", "价格", "入门", "中端", "高端", "百", "千元")
 _SCENE_KEYWORDS = ("通勤", "约会", "日常", "秋冬", "夏天", "送礼", "送人", "场合", "场景", "上班")
@@ -469,6 +485,18 @@ def detect_sub_intent(question: str, intent: str = "") -> str:
         return "usage"
     if any(p in q for p in _REVIEW_PATTERNS):
         return "review"
+    return ""
+
+
+def detect_category_dim(question: str, intent: str = "") -> str:
+    """检测品类维度：beauty / fashion / ""（服饰词优先，避免"防晒衣"误判美妆）。"""
+    q = (question or "").strip()
+    if not q:
+        return ""
+    if any(w in q for w in _FASHION_WORDS):
+        return "fashion"
+    if any(w in q for w in _BEAUTY_WORDS):
+        return "beauty"
     return ""
 
 
@@ -543,6 +571,8 @@ def _enrich_route(
         route.missing_info = detect_missing_info(
             question, route.intent, route.sub_intent, profile=profile
         )
+    if not route.category_dim:
+        route.category_dim = detect_category_dim(question, route.intent)
 
 
 def build_metadata_filter(

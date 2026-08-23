@@ -182,7 +182,7 @@ FLOWS: list[dict[str, Any]] = [
         "turns": [
             {"q": "帮我推荐一款精华", "exp_stage": "consult", "exp_action": "clarify_requirements"},
             {"q": "我是油皮，预算两百", "exp_stage": "evaluate", "exp_action": "recommend"},
-            {"q": "这个搭配什么好", "exp_stage": "evaluate", "exp_action": "cross_sell"},
+            {"q": "这个搭配什么好", "exp_stage": "evaluate", "exp_action": "recommend"},
         ],
     },
     {
